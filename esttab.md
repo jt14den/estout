@@ -149,6 +149,7 @@ _cons            1946.069    -5853.696
 ```stata
 . estout, style(fixed)
 ```
+NOTE: Back to slides for challenge 
 
 ## ESTTAB 
 
