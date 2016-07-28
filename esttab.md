@@ -2,6 +2,10 @@
 
 ### Install 
 
+```stata
+. ssc install estout, replace
+```
+
 * provides tools for making regression tables in Stata (www.stata.com)
 
 **Has following sub-packages** 
@@ -12,34 +16,40 @@
 * **estadd** Program to add extra results to the returns of an estimation command. This is useful to make the the results available for tabulation.
 * **estpost** Program to prepare results from commands such as summarize, tabulate, or correlate for tabulation by esttab or estout.
 
-### Eststo or Estimates store
+### Eststo - a Wrapper for Estimates store
 
 * storing estimates 
 * naming not required, makes up a name 
 * you can name however if you want
-* 
+
+```stata
+. sysuse auto
+```
 
 ```stata
 . eststo clear
 ```
-* erases stored estimates sets 
+
+* erases stored estimates sets post regression
+* let's run a regression using the auto data
 
 ```stata
-. regress price weight mgp
-variable mgp not found
-r(111);
-```
-```
-. eststo
-(est4 stored)
-```
-```
-. regress price weight mgp foreign
-variable mgp not found
-r(111);
+. regress price weight mpg
 ```
 
 ```
+. eststo
+(est1 stored)
+```
+
+* the name assigned to the stored estimates is printed out
+* let's run another regression 
+
+```stata
+. regress price weight mpg foreign
+```
+
+```output
 . regress price weight mpg
 
       Source |       SS           df       MS      Number of obs   =        74
@@ -57,47 +67,17 @@ r(111);
        _cons |   1946.069    3597.05     0.54   0.590    -5226.245    9118.382
 ------------------------------------------------------------------------------
 ```
-```
-. eststo
-(est5 stored)
-````
 
-```
-. clear eststo
-eststo not allowed
-r(198);
-```
+* run eststo to save
 
-```
-. eststo
-(est1 stored)
-```
-
-
-```
-. regress price weight mpg foreign
-
-      Source |       SS           df       MS      Number of obs   =        74
--------------+----------------------------------   F(3, 70)        =     23.29
-       Model |   317252881         3   105750960   Prob > F        =    0.0000
-    Residual |   317812515        70  4540178.78   R-squared       =    0.4996
--------------+----------------------------------   Adj R-squared   =    0.4781
-       Total |   635065396        73  8699525.97   Root MSE        =    2130.8
-
-------------------------------------------------------------------------------
-       price |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
--------------+----------------------------------------------------------------
-      weight |   3.464706    .630749     5.49   0.000     2.206717    4.722695
-         mpg |    21.8536   74.22114     0.29   0.769    -126.1758     169.883
-     foreign |    3673.06   683.9783     5.37   0.000     2308.909    5037.212
-       _cons |  -5853.696   3376.987    -1.73   0.087    -12588.88    881.4934
-------------------------------------------------------------------------------
-```
-
-```
+```stata
 . eststo
 (est2 stored)
 ```
+
+* stata tells you the name 
+* let's print out the table using estout
+
 
 ```
 . estout, style(fixed)
@@ -111,9 +91,14 @@ _cons            1946.069    -5853.696
 ```
 
 ```stata
-. sysuse auto
-(1978 Automobile Data)
+. eststo clear
 ```
+
+* will wipe out the stored estimates
+
+### Use eststo as a prefix command
+
+* we'll prefix eststo to our regress
 
 ```stata
 . eststo: regress price weight mpg
@@ -134,6 +119,8 @@ _cons            1946.069    -5853.696
 ------------------------------------------------------------------------------
 (est1 stored)
 ```
+
+* this prints out the assigned est name after the output
 
 ```stata
 . eststo: regress price weight mpg foreign
@@ -156,77 +143,72 @@ _cons            1946.069    -5853.696
 (est2 stored)
 ```
 
+* again prints out the assigned name
+* let's use estout again to print the table (try witout fixed)
+
+```stata
+. estout, style(fixed)
+```
+
+## ESTTAB 
+
+1. Use eststo to store multiple estimates
+2. Apply esttab to compse a regression table
+
+* diff b/t esttab and estout, esttab produces a fully formatted table
+
+```
+. eststo clear
+. sysuse auto
+. eststo: regress price weight mpg
+. eststo: regress price weight mpg foreign
+. esttab
+```
+
+### Change table content
+
+* default esttab is to display raw point estimates along with t-statistics 
+* print the number of obs in the table footer
+* all can be changed 
+* lets' replace the t statistic with standard errors, add the adjusted R-squared and omite significance asterisks
 
 ```
 . esttab, se ar2 nostar
-
---------------------------------------
-                      (1)          (2)
-                    price        price
---------------------------------------
-weight              1.747        3.465
-                  (0.641)      (0.631)
-
-mpg                -49.51        21.85
-                  (86.16)      (74.22)
-
-foreign                         3673.1
-                               (684.0)
-
-_cons              1946.1      -5853.7
-                 (3597.0)     (3377.0)
---------------------------------------
-N                      74           74
-adj. R-sq           0.273        0.478
---------------------------------------
-Standard errors in parentheses
 ```
+
+The t statistics can be replaced with: 
+* p-values (p)
+* confidence intervals (ci)
+* or any parameter statistic contained in the estimates (see aux())
+* pr2 for pseudo-R-squared and bic option to include anython other scal stats contained in teh stored estimates
+* for instance scalars(F df_m df_r)
+
+* also the point estimates may be replaced with other statistics 
+* eg. beta coefficients are printed and the t-stats are suppressed:
 
 ```
 . esttab, beta not
-
---------------------------------------------
-                      (1)             (2)   
-                    price           price   
---------------------------------------------
-weight              0.460**         0.913***
-mpg                -0.097           0.043   
-foreign                             0.573***
---------------------------------------------
-N                      74              74   
---------------------------------------------
-Standardized beta coefficients
-* p<0.05, ** p<0.01, *** p<0.001
 ```
+
+* more options are providec by the `main()` or thru `estout`
+
+NOTE: back to slides
+
+
+### Layout, label, titles
+
+* `wide` option arrranges point est. with any other stored parameter
+* `plain` option produces a minimally formatted table with all display formats set to Stata's `%9.0g`
+* `compress` reduces horizontal spacing to fit more models on the screen
+* `label` option causes variable labels to be used 
+* `mtitles` specifies that model titles be printed in the header 
+* let's use some of these options
 
 ```
 . esttab, wide
-
-------------------------------------------------------
-> ----------------
-                      (1)                          (2)
->                 
-                    price                        price
->                 
-------------------------------------------------------
-> ----------------
-weight              1.747**        (2.72)        3.465
-> ***       (5.49)
-mpg                -49.51         (-0.57)        21.85
->           (0.29)
-foreign                                         3673.1
-> ***       (5.37)
-_cons              1946.1          (0.54)      -5853.7
->          (-1.73)
-------------------------------------------------------
-> ----------------
-N                      74                           74
->                 
-------------------------------------------------------
-> ----------------
-t statistics in parentheses
-* p<0.05, ** p<0.01, *** p<0.001
 ```
+
+* let's create a table with `se ar2 nostar brackets label`, add a title, model title and add a note
 
 ```
 . esttab, se ar2 nostar brackets label title(This is a
@@ -257,44 +239,39 @@ Source: auto.dta
 ```
 
 
+NOTE: back to slides 
+
+### Numerical formats 
+
+* Let's display p-values and the R-squared with 4 decimal places and point estimates with the `%9.0g` format
+
 ```
 . esttab, b(%9.0g) p(4) r2(4) nostar wide
-
-------------------------------------------------------
-> ----------
-                      (1)                       (2)   
->           
-                    price                     price   
->           
-------------------------------------------------------
-> ----------
-weight           1.746559     (0.0081)     3.464706   
->   (0.0000)
-mpg             -49.51222     (0.5673)      21.8536   
->   (0.7693)
-foreign                                     3673.06   
->   (0.0000)
-_cons            1946.069     (0.5902)    -5853.696   
->   (0.0874)
-------------------------------------------------------
-> ----------
-N                      74                        74   
->           
-R-sq               0.2934                    0.4996   
->           
-------------------------------------------------------
-> ----------
-p-values in parentheses
 ```
 
+* Available formats are Stata's display formats, such as `%9.0g` or `%8.2f` (see [d] Format)
+* You can request a fixed format by specifying an integer indicating the desired number of decimal points 
+
+NOTE: back to slides
+
+### Output formats
+
+* spreadsheet 
 ```
 . esttab using example.csv
 (output written to example.csv)
 ```
+
+* as word: 
 ```
 . esttab using example.rtf
 (output written to example.rtf)
 ```
+
+
+### Digging deeper into estout
+
+* esttab is a wrapper, to get all the commands that are wrapped around estout run: 
 
 ```
 . esttab, noisily
@@ -323,25 +300,55 @@ estout ,
  style(esttab)
 ```
 
+## estpost 
+
+* estpost command [ arguments ] [, options ]
+
 ```stata
---------------------------------------------
-                      (1)             (2)   
-                    price           price   
---------------------------------------------
-weight              1.747**         3.465***
-                   (2.72)          (5.49)   
+. sysuse auto
+. estpost summarize price weight rep78 mpg
+. esttab, cells("count mean sd min max") noobs
+```
 
-mpg                -49.51           21.85   
-                  (-0.57)          (0.29)   
 
-foreign                            3673.1***
-                                   (5.37)   
+* more examples 
+* summarize 
 
-_cons              1946.1         -5853.7   
-                   (0.54)         (-1.73)   
---------------------------------------------
-N                      74              74   
---------------------------------------------
-t statistics in parentheses
-* p<0.05, ** p<0.01, *** p<0.001
+```stata
+sysuse auto
+. estpost summarize price mpg rep78 foreign, listwise
+. esttab, cells("mean sd min max") nomtitle nonumber
+```
+
+* tabstat 
+* use columns(variables) and columns(statistics) to determine whether to display variables or statistics in the columns (default is columns(variables))
+
+```stata
+.sysuse auto
+.estpost tabstat price mpg rep78, listwise statistics(mean sd)
+.esttab, cells("price mpg rep78") nomtitle nonumber
+```
+
+Now type columns(statistics) to print statistics in columns: 
+
+```stata
+. sysuse auto
+. estpost tabstat price mpg rep78, listwise statistics(mean sd) columns(statistics)
+. esttab, cells("mean sd") nomtitle nonumber
+```
+
+### subgroups (summarize)
+
+```
+. sysuse auto
+. by foreign: eststo: quietly estpost summarize prices mpg rep78, listwise
+. esttab, cells("mean sd") label nodepvar
+```
+
+### tabstat subgroups
+
+```stata
+. sysuse auto
+. estpost tabstat price mpg rep78, by(foreign) statisics(mean sd) columns(statistics) listwise
+. esttab, main(mean) aux(sd) nostar unstack noobs nonot nomtitle nonumber
 ```
