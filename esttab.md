@@ -12,9 +12,17 @@
 * **estadd** Program to add extra results to the returns of an estimation command. This is useful to make the the results available for tabulation.
 * **estpost** Program to prepare results from commands such as summarize, tabulate, or correlate for tabulation by esttab or estout.
 
+### Eststo or Estimates store
+
+* storing estimates 
+* naming not required, makes up a name 
+* you can name however if you want
+* 
+
 ```stata
 . eststo clear
 ```
+* erases stored estimates sets 
 
 ```stata
 . sysuse auto
