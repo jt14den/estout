@@ -9,7 +9,7 @@
 (1978 Automobile Data)
 ```
 
-```output
+```stata
 . eststo: regress price weight mpg
 
       Source |       SS           df       MS      Number of obs   =        74
